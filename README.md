@@ -177,6 +177,25 @@ npm run version:major    # 1.0.0 -> 2.0.0
 - **Novas funcionalidades (backward compatible)**: Incrementar MINOR (ex: `1.0.0` -> `1.1.0`)
 - **Mudanças breaking**: Incrementar MAJOR (ex: `1.0.0` -> `2.0.0`)
 
+### Versionamento Automático
+
+O sistema incrementa automaticamente a versão PATCH a cada commit feito. Para pular o incremento automático, use:
+
+```bash
+git commit -m "sua mensagem [skip-version]"
+```
+
+Para pular a criação de release no GitHub:
+
+```bash
+git commit -m "sua mensagem [skip-release]"
+```
+
+### GitHub Actions
+
+- **Auto Release**: Cria automaticamente uma tag e release no GitHub quando a versão muda
+- **Workflow**: `.github/workflows/versioning.yml`
+
 ## Licença
 
 ISC

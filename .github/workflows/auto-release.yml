@@ -1,14 +1,12 @@
-name: Versioning & Release
+name: Auto Release on Version Change
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'  # Dispara quando uma tag de versão é criada
   push:
     branches:
       - main
     paths:
       - 'VERSION'
+      - 'package.json'
 
 jobs:
   create-release:
@@ -33,6 +31,7 @@ jobs:
           VERSION=$(cat VERSION)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Current version: $VERSION"
+          echo "::set-output name=version::$VERSION"
 
       - name: Check if tag exists
         id: tag-check
@@ -65,8 +64,11 @@ jobs:
           body: |
             ## Versão ${{ steps.version.outputs.version }}
             
-            Sistema de Caixinha para Funcionários
-            
             Veja o [CHANGELOG.md](CHANGELOG.md) para mais detalhes das mudanças.
+            
+            ### Como usar este release
+            
+            - Versão completa: `${{ steps.version.outputs.version }}`
+            - Data do release: $(date +'%d/%m/%Y %H:%M')
           draft: false
           prerelease: false
