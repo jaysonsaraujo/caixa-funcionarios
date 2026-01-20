@@ -1,0 +1,37 @@
+{
+  "name": "caixa-funcionarios",
+  "version": "1.0.1",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/web",
+    "start": "npm run start --workspace=apps/web",
+    "lint": "npm run lint --workspace=apps/web",
+    "type-check": "npm run type-check --workspace=apps/web",
+    "version": "node scripts/version.js",
+    "version:patch": "node scripts/version.js patch",
+    "version:minor": "node scripts/version.js minor",
+    "version:major": "node scripts/version.js major"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "description": "Sistema completo de gerenciamento de caixinha com contribuições via cotas, empréstimos e sorteios mensais.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaysonsaraujo/caixa-funcionarios.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/jaysonsaraujo/caixa-funcionarios/issues"
+  },
+  "homepage": "https://github.com/jaysonsaraujo/caixa-funcionarios#readme"
+}
