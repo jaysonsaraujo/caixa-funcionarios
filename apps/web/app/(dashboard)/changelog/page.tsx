@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/shared/Card'
 import { getVersionSync } from '@/lib/utils/version'
 import { changelogData } from '@/lib/data/changelog'
+import { MarkVersionSeen } from '@/components/shared/MarkVersionSeen'
 
 export default async function ChangelogPage() {
   const supabase = await createClient()
@@ -31,6 +32,7 @@ export default async function ChangelogPage() {
 
   return (
     <div className="space-y-6">
+      <MarkVersionSeen />
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Histórico de Atualizações</h1>
         <p className="mt-2 text-sm text-gray-600">

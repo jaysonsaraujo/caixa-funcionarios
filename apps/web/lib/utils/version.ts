@@ -1,20 +1,19 @@
 /**
  * Utilitário para obter a versão do sistema
+ * Lê automaticamente do package.json
  */
 
-let cachedVersion: string | null = null
+import packageJson from '../../package.json'
 
-// Versão padrão - sincronizar com VERSION e package.json
-const DEFAULT_VERSION = '1.0.0'
+let cachedVersion: string | null = null
 
 export async function getVersion(): Promise<string> {
   if (cachedVersion) {
     return cachedVersion
   }
 
-  // Em Next.js, preferir usar variáveis de ambiente ou valores fixos
-  // para evitar problemas com require() em diferentes contextos
-  cachedVersion = process.env.NEXT_PUBLIC_APP_VERSION || DEFAULT_VERSION
+  // Ler do package.json do web app
+  cachedVersion = packageJson.version || '1.0.0'
   return cachedVersion
 }
 
@@ -23,7 +22,7 @@ export function getVersionSync(): string {
     return cachedVersion
   }
 
-  // Versão sincronizada - usar valor padrão ou variável de ambiente
-  cachedVersion = process.env.NEXT_PUBLIC_APP_VERSION || DEFAULT_VERSION
+  // Ler do package.json do web app (sincronizado)
+  cachedVersion = packageJson.version || '1.0.0'
   return cachedVersion
 }

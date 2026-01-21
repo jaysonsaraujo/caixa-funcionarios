@@ -5,6 +5,22 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.0.3] - 2026-01-21
+
+### Corrigido
+- Erro de hidratação causado por extensões do navegador (adicionado suppressHydrationWarning)
+
+### Alterado
+- Melhorada a visualização do histórico de escolhas no painel administrativo
+
+### Adicionado (Administradores)
+- Histórico de escolhas de sorteios agrupado por usuário
+- Visualização completa de números escolhidos com informações detalhadas (nome, email, status, valores)
+- Destaque visual para números ganhadores e reservas expiradas
+- Estatísticas resumidas por usuário (total de números, confirmados, reservados, valor total)
+
+---
+
 ## [1.0.0] - 2026-01-19
 
 ### Adicionado
