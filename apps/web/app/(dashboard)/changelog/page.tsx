@@ -34,11 +34,11 @@ export default async function ChangelogPage() {
     <div className="space-y-6">
       <MarkVersionSeen />
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Histórico de Atualizações</h1>
-        <p className="mt-2 text-sm text-gray-600">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Histórico de Atualizações</h1>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
           Versão atual: <span className="font-mono font-semibold">v{currentVersion}</span>
         </p>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           {isAdmin
             ? 'Visualizando atualizações do painel administrativo'
             : 'Visualizando atualizações do sistema para usuários'}
@@ -47,17 +47,17 @@ export default async function ChangelogPage() {
 
       <div className="space-y-6">
         {userChangelog.map((entry, index) => (
-          <Card key={index}>
+          <Card key={index} variant="elevated" className="hover:shadow-xl transition-shadow">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-xl">
                     Versão {entry.version}
                   </CardTitle>
-                  <CardDescription className="flex items-center gap-2">
+                  <CardDescription className="flex items-center gap-2 mt-1">
                     <span>{entry.date}</span>
                     {entry.audience !== 'all' && (
-                      <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                      <span className="px-2 py-1 text-xs rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
                         {entry.audience === 'admin' ? 'Administrador' : 'Usuário'}
                       </span>
                     )}
@@ -68,8 +68,8 @@ export default async function ChangelogPage() {
             <CardContent>
               {entry.added && entry.added.length > 0 && (
                 <div className="mb-4">
-                  <h3 className="text-sm font-semibold text-green-700 mb-2">✅ Adicionado</h3>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 ml-2">
+                  <h3 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-2">✅ Adicionado</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300 ml-2">
                     {entry.added.map((item, idx) => (
                       <li key={idx}>{item}</li>
                     ))}
@@ -79,8 +79,8 @@ export default async function ChangelogPage() {
 
               {entry.changed && entry.changed.length > 0 && (
                 <div className="mb-4">
-                  <h3 className="text-sm font-semibold text-blue-700 mb-2">🔄 Alterado</h3>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 ml-2">
+                  <h3 className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-2">🔄 Alterado</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300 ml-2">
                     {entry.changed.map((item, idx) => (
                       <li key={idx}>{item}</li>
                     ))}
@@ -90,8 +90,8 @@ export default async function ChangelogPage() {
 
               {entry.fixed && entry.fixed.length > 0 && (
                 <div className="mb-4">
-                  <h3 className="text-sm font-semibold text-orange-700 mb-2">🔧 Corrigido</h3>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 ml-2">
+                  <h3 className="text-sm font-semibold text-orange-700 dark:text-orange-400 mb-2">🔧 Corrigido</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300 ml-2">
                     {entry.fixed.map((item, idx) => (
                       <li key={idx}>{item}</li>
                     ))}
@@ -101,8 +101,8 @@ export default async function ChangelogPage() {
 
               {entry.security && entry.security.length > 0 && (
                 <div className="mb-4">
-                  <h3 className="text-sm font-semibold text-red-700 mb-2">🔒 Segurança</h3>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 ml-2">
+                  <h3 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2">🔒 Segurança</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300 ml-2">
                     {entry.security.map((item, idx) => (
                       <li key={idx}>{item}</li>
                     ))}
@@ -115,9 +115,9 @@ export default async function ChangelogPage() {
       </div>
 
       {userChangelog.length === 0 && (
-        <Card>
+        <Card variant="elevated">
           <CardContent className="pt-6">
-            <p className="text-center text-gray-500">
+            <p className="text-center text-gray-500 dark:text-gray-400">
               Nenhuma atualização registrada ainda.
             </p>
           </CardContent>

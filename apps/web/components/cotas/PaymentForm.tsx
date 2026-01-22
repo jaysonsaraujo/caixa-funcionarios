@@ -91,7 +91,7 @@ export function PaymentForm({ paymentId, valor }: PaymentFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">{error}</div>
+        <div className="p-4 text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/30 rounded-xl border-2 border-red-200 dark:border-red-700">{error}</div>
       )}
       <div className="space-y-2">
         <Label htmlFor="formaPagamento">Forma de Pagamento</Label>
@@ -99,7 +99,7 @@ export function PaymentForm({ paymentId, valor }: PaymentFormProps) {
           value={formaPagamento}
           onValueChange={(value) => setFormaPagamento(value as 'PIX' | 'dinheiro')}
         >
-          <SelectTrigger id="formaPagamento">
+          <SelectTrigger id="formaPagamento" className="transition-all focus:ring-2 focus:ring-primary">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -116,15 +116,19 @@ export function PaymentForm({ paymentId, valor }: PaymentFormProps) {
             type="file"
             accept="image/*,.pdf"
             onChange={(e) => setComprovante(e.target.files?.[0] || null)}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            className="block w-full text-sm text-gray-600 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary dark:file:bg-primary/20 dark:file:text-primary hover:file:bg-primary/20 transition-colors"
           />
         </div>
       )}
-      <div className="p-3 bg-gray-50 rounded-md">
-        <p className="text-sm font-medium text-gray-700">Valor a pagar</p>
-        <p className="text-xl font-bold text-gray-900">{formatCurrency(valor)}</p>
+      <div className="p-4 bg-gradient-to-r from-primary/10 via-accent/5 to-transparent dark:from-primary/20 dark:via-accent/10 dark:to-primary/5 rounded-xl border-2 border-primary/20 dark:border-primary/40">
+        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Valor a pagar</p>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(valor)}</p>
       </div>
-      <Button type="submit" className="w-full" disabled={loading}>
+      <Button 
+        type="submit" 
+        className="w-full gradient-primary text-white border-0 hover:opacity-90" 
+        disabled={loading}
+      >
         {loading ? 'Enviando...' : 'Registrar Pagamento'}
       </Button>
     </form>

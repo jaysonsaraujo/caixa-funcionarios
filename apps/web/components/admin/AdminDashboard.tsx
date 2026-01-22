@@ -3,15 +3,36 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/shared/Card'
+import { StatCard } from '@/components/shared/StatCard'
 import { formatCurrency } from '@/lib/utils'
+import Link from 'next/link'
+import { Button } from '@/components/shared/Button'
+
+interface Stats {
+  totalUsers: number
+  totalCotistas: number
+  totalArrecadado: number
+  totalArrecadadoMes: number
+  totalArrecadadoAno: number
+  totalEmprestimos: number
+  totalEmprestimosMes: number
+  pagamentosPendentes: number
+  emprestimosPendentes: number
+  sorteioMes: any
+}
 
 export function AdminDashboard() {
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<Stats>({
     totalUsers: 0,
     totalCotistas: 0,
     totalArrecadado: 0,
+    totalArrecadadoMes: 0,
+    totalArrecadadoAno: 0,
     totalEmprestimos: 0,
-    sorteioMes: null as any,
+    totalEmprestimosMes: 0,
+    pagamentosPendentes: 0,
+    emprestimosPendentes: 0,
+    sorteioMes: null,
   })
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
@@ -34,23 +55,61 @@ export function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .eq('role', 'cotista')
 
-      // Total arrecadado (pagamentos pagos)
-      const { data: payments } = await supabase
+      // Total arrecadado (todos os tempos)
+      const { data: paymentsAll } = await supabase
         .from('quota_payments')
-        .select('valor_pago')
+        .select('valor_pago, mes_referencia, ano_referencia')
         .eq('status', 'pago')
 
       const totalArrecadado =
-        payments?.reduce((sum, p) => sum + Number(p.valor_pago), 0) || 0
+        paymentsAll?.reduce((sum, p) => sum + Number(p.valor_pago), 0) || 0
 
-      // Total de empréstimos aprovados
-      const { data: loans } = await supabase
+      // Arrecadação do mês atual
+      const totalArrecadadoMes =
+        paymentsAll
+          ?.filter(
+            (p) => p.mes_referencia === mesAtual && p.ano_referencia === anoAtual
+          )
+          .reduce((sum, p) => sum + Number(p.valor_pago), 0) || 0
+
+      // Arrecadação do ano atual
+      const totalArrecadadoAno =
+        paymentsAll
+          ?.filter((p) => p.ano_referencia === anoAtual)
+          .reduce((sum, p) => sum + Number(p.valor_pago), 0) || 0
+
+      // Pagamentos pendentes
+      const { count: pagamentosPendentes } = await supabase
+        .from('quota_payments')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'aguardando_confirmacao')
+
+      // Total de empréstimos aprovados (todos os tempos)
+      const { data: loansAll } = await supabase
         .from('loans')
-        .select('valor_solicitado')
+        .select('valor_solicitado, data_solicitacao, status')
         .eq('status', 'aprovado')
 
       const totalEmprestimos =
-        loans?.reduce((sum, l) => sum + Number(l.valor_solicitado), 0) || 0
+        loansAll?.reduce((sum, l) => sum + Number(l.valor_solicitado), 0) || 0
+
+      // Empréstimos aprovados no mês atual
+      const totalEmprestimosMes =
+        loansAll
+          ?.filter((l) => {
+            const dataSolicitacao = new Date(l.data_solicitacao)
+            return (
+              dataSolicitacao.getMonth() + 1 === mesAtual &&
+              dataSolicitacao.getFullYear() === anoAtual
+            )
+          })
+          .reduce((sum, l) => sum + Number(l.valor_solicitado), 0) || 0
+
+      // Empréstimos pendentes
+      const { count: emprestimosPendentes } = await supabase
+        .from('loans')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pendente')
 
       // Sorteio do mês
       const { data: raffle } = await supabase
@@ -64,7 +123,12 @@ export function AdminDashboard() {
         totalUsers: totalUsers || 0,
         totalCotistas: totalCotistas || 0,
         totalArrecadado,
+        totalArrecadadoMes,
+        totalArrecadadoAno,
         totalEmprestimos,
+        totalEmprestimosMes,
+        pagamentosPendentes: pagamentosPendentes || 0,
+        emprestimosPendentes: emprestimosPendentes || 0,
         sorteioMes: raffle,
       })
       setLoading(false)
@@ -74,50 +138,243 @@ export function AdminDashboard() {
   }, [supabase])
 
   if (loading) {
-    return <div>Carregando...</div>
+    return <div className="text-center py-8 text-gray-600 dark:text-gray-400">Carregando estatísticas...</div>
   }
 
+  const mesAtual = new Date().toLocaleString('pt-BR', { month: 'long', year: 'numeric' })
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Total de Usuários</CardTitle>
-          <CardDescription>Usuários cadastrados (exceto admins)</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{stats.totalUsers}</p>
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+      {/* Estatísticas Gerais */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Visão Geral</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Total de Usuários"
+            value={stats.totalUsers}
+            description="Usuários cadastrados (exceto admins)"
+            variant="primary"
+            icon={
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            }
+          />
+          <StatCard
+            title="Cotistas"
+            value={stats.totalCotistas}
+            description="Usuários com cotas ativas"
+            variant="success"
+            icon={
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            }
+          />
+          <StatCard
+            title="Total Arrecadado"
+            value={formatCurrency(stats.totalArrecadado)}
+            description="Valor total histórico"
+            variant="info"
+            icon={
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+          />
+          <StatCard
+            title="Empréstimos Ativos"
+            value={formatCurrency(stats.totalEmprestimos)}
+            description="Valor total aprovado"
+            variant="warning"
+            icon={
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            }
+          />
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Cotistas</CardTitle>
-          <CardDescription>Usuários com cotas ativas</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{stats.totalCotistas}</p>
-        </CardContent>
-      </Card>
+      {/* Estatísticas Mensais */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          Estatísticas de {mesAtual}
+        </h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Arrecadação do Mês"
+            value={formatCurrency(stats.totalArrecadadoMes)}
+            description={`Pagamentos confirmados em ${mesAtual}`}
+            variant="success"
+            icon={
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            }
+          />
+          <StatCard
+            title="Empréstimos do Mês"
+            value={formatCurrency(stats.totalEmprestimosMes)}
+            description={`Aprovados em ${mesAtual}`}
+            variant="info"
+            icon={
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            }
+          />
+          <Card variant="elevated" className="relative overflow-hidden">
+            <CardHeader>
+              <CardTitle className="text-base">Pagamentos Pendentes</CardTitle>
+              <CardDescription>Aguardando confirmação</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                  {stats.pagamentosPendentes}
+                </p>
+                <Link href="/admin/pagamentos">
+                  <Button size="sm" className="gradient-primary text-white border-0 hover:opacity-90">
+                    Ver
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          <Card variant="elevated" className="relative overflow-hidden">
+            <CardHeader>
+              <CardTitle className="text-base">Empréstimos Pendentes</CardTitle>
+              <CardDescription>Aguardando aprovação</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                  {stats.emprestimosPendentes}
+                </p>
+                <Link href="/admin/emprestimos">
+                  <Button size="sm" className="gradient-primary text-white border-0 hover:opacity-90">
+                    Ver
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Total Arrecadado</CardTitle>
-          <CardDescription>Valor total de pagamentos confirmados</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{formatCurrency(stats.totalArrecadado)}</p>
-        </CardContent>
-      </Card>
+      {/* Estatísticas Anuais */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          Estatísticas do Ano {new Date().getFullYear()}
+        </h2>
+        <div className="grid gap-6 md:grid-cols-2">
+          <StatCard
+            title="Arrecadação Anual"
+            value={formatCurrency(stats.totalArrecadadoAno)}
+            description="Total arrecadado no ano atual"
+            variant="success"
+            icon={
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            }
+          />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Empréstimos Ativos</CardTitle>
-          <CardDescription>Valor total de empréstimos aprovados</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{formatCurrency(stats.totalEmprestimos)}</p>
-        </CardContent>
-      </Card>
+          {stats.sorteioMes && (
+            <Card
+              variant="elevated"
+              className="relative overflow-hidden bg-slate-50/95 dark:bg-slate-800/85 border border-gray-200/70 dark:border-slate-700/80"
+            >
+              <CardHeader>
+                <CardTitle className="text-base text-gray-900 dark:text-white">Sorteio do Mês</CardTitle>
+                <CardDescription className="text-gray-600 dark:text-gray-300">
+                  {new Date(
+                    stats.sorteioMes.ano,
+                    stats.sorteioMes.mes - 1
+                  ).toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Prêmio: {formatCurrency(stats.sorteioMes.premio_valor)}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Status: {stats.sorteioMes.status === 'aberto' ? 'Aberto' : 'Realizado'}
+                  </p>
+                  <Link href="/admin/sorteios">
+                    <Button size="sm" className="bg-white text-gray-900 hover:bg-gray-100 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 font-semibold mt-2 border border-gray-200 dark:border-gray-300">
+                      Gerenciar
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Links Rápidos */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Ações Rápidas</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <Link href="/admin/usuarios">
+            <Card variant="elevated" className="hover:scale-105 transition-all duration-300 cursor-pointer group">
+              <CardHeader>
+                <CardTitle className="text-base group-hover:text-primary transition-colors">Usuários</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Gerenciar usuários</p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/admin/pagamentos">
+            <Card variant="elevated" className="hover:scale-105 transition-all duration-300 cursor-pointer group">
+              <CardHeader>
+                <CardTitle className="text-base group-hover:text-primary transition-colors">Pagamentos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {stats.pagamentosPendentes} pendentes
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/admin/emprestimos">
+            <Card variant="elevated" className="hover:scale-105 transition-all duration-300 cursor-pointer group">
+              <CardHeader>
+                <CardTitle className="text-base group-hover:text-primary transition-colors">Empréstimos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {stats.emprestimosPendentes} pendentes
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/admin/sorteios">
+            <Card variant="elevated" className="hover:scale-105 transition-all duration-300 cursor-pointer group">
+              <CardHeader>
+                <CardTitle className="text-base group-hover:text-primary transition-colors">Sorteios</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Gerenciar sorteios</p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/admin/configuracoes">
+            <Card variant="elevated" className="hover:scale-105 transition-all duration-300 cursor-pointer group">
+              <CardHeader>
+                <CardTitle className="text-base group-hover:text-primary transition-colors">Configurações</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Ajustar parâmetros</p>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }

@@ -106,7 +106,7 @@ export function RegisterQuotaForm({ valorMinimoCota }: RegisterQuotaFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">{error}</div>
+        <div className="p-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl border-2 border-red-200 dark:border-red-800">{error}</div>
       )}
       <div className="space-y-2">
         <Label htmlFor="numCotas">Número de Cotas</Label>
@@ -118,18 +118,18 @@ export function RegisterQuotaForm({ valorMinimoCota }: RegisterQuotaFormProps) {
           onChange={(e) => setNumCotas(parseInt(e.target.value) || 1)}
           required
         />
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           Valor mínimo por cota: {formatCurrency(valorMinimoCota)}
         </p>
       </div>
-      <div className="p-4 bg-gray-50 rounded-md">
-        <p className="text-sm font-medium text-gray-700">Valor Total Mensal</p>
-        <p className="text-2xl font-bold text-gray-900">{formatCurrency(valorTotal)}</p>
+      <div className="p-4 bg-gradient-to-r from-primary/10 via-accent/5 to-transparent dark:from-primary/20 dark:via-accent/10 rounded-xl border-2 border-primary/20 dark:border-primary/30">
+        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Valor Total Mensal</p>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(valorTotal)}</p>
       </div>
-      <Button type="submit" className="w-full" disabled={loading}>
+      <Button type="submit" className="w-full gradient-primary text-white border-0 hover:opacity-90" disabled={loading}>
         {loading ? 'Cadastrando...' : 'Cadastrar Cotas'}
       </Button>
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-gray-500 dark:text-gray-400">
         Ao cadastrar suas cotas, você será responsável por pagar o valor mensal até o 5º dia útil
         de cada mês.
       </p>

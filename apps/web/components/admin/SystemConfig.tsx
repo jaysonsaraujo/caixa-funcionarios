@@ -58,11 +58,11 @@ export function SystemConfig() {
   }
 
   if (loading) {
-    return <div className="text-sm text-gray-600">Carregando...</div>
+    return <div className="text-sm text-gray-600 dark:text-gray-400">Carregando...</div>
   }
 
   if (!config) {
-    return <p className="text-sm text-gray-600">Configurações não encontradas</p>
+    return <p className="text-sm text-gray-600 dark:text-gray-400">Configurações não encontradas</p>
   }
 
   return (
@@ -174,7 +174,7 @@ export function SystemConfig() {
         </div>
       </div>
 
-      <Button type="submit" disabled={saving}>
+      <Button type="submit" className="gradient-primary text-white border-0 hover:opacity-90" disabled={saving}>
         {saving ? 'Salvando...' : 'Salvar Configurações'}
       </Button>
     </form>

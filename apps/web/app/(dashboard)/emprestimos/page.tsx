@@ -65,7 +65,7 @@ export default async function EmprestimosPage() {
             Solicite empréstimos baseados em suas cotas pagas
           </p>
         </div>
-        <Card>
+        <Card variant="elevated">
           <CardHeader>
             <CardTitle>Acesso Restrito</CardTitle>
             <CardDescription>Administradores não podem solicitar empréstimos</CardDescription>
@@ -88,14 +88,14 @@ export default async function EmprestimosPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Empréstimos</h1>
-        <p className="mt-2 text-sm text-gray-600">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Empréstimos</h1>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
           Solicite empréstimos baseados em suas cotas pagas
         </p>
       </div>
 
       {canRequestLoan && (
-        <Card>
+        <Card variant="elevated">
           <CardHeader>
             <CardTitle>Solicitar Empréstimo</CardTitle>
             <CardDescription>
@@ -114,7 +114,7 @@ export default async function EmprestimosPage() {
       )}
 
       {!canRequestLoan && (
-        <Card>
+        <Card variant="elevated">
           <CardHeader>
             <CardTitle>Solicitar Empréstimo</CardTitle>
             <CardDescription>Não é possível solicitar empréstimo no momento</CardDescription>
@@ -130,7 +130,7 @@ export default async function EmprestimosPage() {
       )}
 
       {loans && loans.length > 0 && (
-        <Card>
+        <Card variant="elevated">
           <CardHeader>
             <CardTitle>Meus Empréstimos</CardTitle>
             <CardDescription>Histórico de empréstimos solicitados</CardDescription>

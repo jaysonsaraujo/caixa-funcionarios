@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/shared/Button'
-import { formatCurrency, addDaysToString } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
 interface Ticket {
@@ -33,16 +33,16 @@ export function RaffleNumbersGrid({
   const supabase = createClient()
 
   const takenNumbersSet = new Set(takenNumbers.map((t) => t.numero_escolhido))
-  const myNumbers = takenNumbers
-    .filter((t) => t.user_id === currentUserId)
-    .map((t) => t.numero_escolhido)
+  const myTickets = takenNumbers.filter((t) => t.user_id === currentUserId)
+  const myNumbers = myTickets.map((t) => t.numero_escolhido)
+  const myNumberStatus = new Map(myTickets.map((t) => [t.numero_escolhido, t.status]))
 
   const isNumberTaken = (num: number) => takenNumbersSet.has(num)
   const isMyNumber = (num: number) => myNumbers.includes(num)
 
   const toggleNumber = (num: number) => {
-    if (isNumberTaken(num) && !isMyNumber(num)) {
-      return // Não pode selecionar número já escolhido por outro
+    if (isNumberTaken(num)) {
+      return // Não pode movimentar número já reservado/confirmado
     }
 
     setSelectedNumbers((prev) => {
@@ -102,29 +102,31 @@ export function RaffleNumbersGrid({
   const totalValue = selectedNumbers.length * valorBilhete
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {error && (
-        <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">{error}</div>
+        <div className="p-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl border-2 border-red-200 dark:border-red-800">{error}</div>
       )}
 
-      <div className="grid grid-cols-10 gap-2">
+      <div className="grid grid-cols-10 gap-2 p-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50">
         {Array.from({ length: 100 }, (_, i) => i + 1).map((num) => {
           const isSelected = selectedNumbers.includes(num)
           const taken = isNumberTaken(num)
           const isMine = isMyNumber(num)
+          const myStatus = myNumberStatus.get(num)
 
           return (
             <button
               key={num}
               type="button"
               onClick={() => toggleNumber(num)}
-              disabled={taken && !isMine}
+              disabled={taken}
               className={cn(
-                'h-10 w-10 rounded-md text-sm font-medium transition-colors',
-                isSelected && 'bg-blue-500 text-white',
-                !isSelected && !taken && 'bg-gray-100 hover:bg-gray-200',
-                taken && !isMine && 'bg-gray-300 text-gray-500 cursor-not-allowed',
-                isMine && 'bg-green-500 text-white'
+                'h-12 w-12 rounded-xl text-sm font-bold transition-all duration-200',
+                isSelected && 'gradient-primary text-white shadow-lg scale-110',
+                !isSelected && !taken && 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 hover:scale-105 text-gray-700 dark:text-gray-200',
+                taken && !isMine && 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed opacity-60',
+                isMine && myStatus === 'confirmado' && 'gradient-success text-white shadow-lg',
+                isMine && myStatus === 'reservado' && 'bg-yellow-500 text-white shadow-lg'
               )}
             >
               {num}
@@ -133,23 +135,32 @@ export function RaffleNumbersGrid({
         })}
       </div>
 
-      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-md">
+      <div className="flex items-center justify-between p-6 bg-gradient-to-r from-primary/10 via-accent/5 to-transparent dark:from-primary/20 dark:via-accent/10 rounded-xl border-2 border-primary/20 dark:border-primary/30">
         <div>
-          <p className="text-sm font-medium text-gray-700">
-            Números selecionados: {selectedNumbers.length}
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Números selecionados: <span className="font-bold text-primary dark:text-primary">{selectedNumbers.length}</span>
           </p>
-          <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalValue)}</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(totalValue)}</p>
         </div>
-        <Button onClick={handleSubmit} disabled={loading || selectedNumbers.length === 0}>
+        <Button 
+          onClick={handleSubmit} 
+          disabled={loading || selectedNumbers.length === 0}
+          className="gradient-primary text-white border-0 hover:opacity-90 disabled:opacity-50"
+        >
           {loading ? 'Reservando...' : 'Reservar Números'}
         </Button>
       </div>
 
-      <div className="text-xs text-gray-600 space-y-1">
-        <p>• Números verdes são seus números confirmados</p>
-        <p>• Números cinza estão ocupados por outros usuários</p>
-        <p>• Você tem 3 dias para realizar o pagamento após reservar</p>
-        <p>• Números não pagos serão liberados automaticamente</p>
+      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+        <p className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-2">ℹ️ Informações importantes:</p>
+        <div className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+          <p>• Números verdes são seus números confirmados</p>
+          <p>• Números amarelos são suas reservas aguardando pagamento</p>
+          <p>• Números cinza estão ocupados por outros usuários</p>
+          <p>• Números já reservados/confirmados não podem ser alterados</p>
+          <p>• Você tem 3 dias para realizar o pagamento após reservar</p>
+          <p>• Números não pagos serão liberados automaticamente</p>
+        </div>
       </div>
     </div>
   )

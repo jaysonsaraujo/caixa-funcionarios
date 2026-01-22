@@ -87,7 +87,7 @@ export function LoanRequestForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">{error}</div>
+        <div className="p-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl border-2 border-red-200 dark:border-red-800">{error}</div>
       )}
       <div className="space-y-2">
         <Label htmlFor="valorSolicitado">Valor Solicitado</Label>
@@ -102,36 +102,36 @@ export function LoanRequestForm({
           placeholder="0.00"
           required
         />
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           Valor máximo disponível: {formatCurrency(maxValue)}
         </p>
       </div>
 
       <div className="space-y-2">
-        <div className="p-4 bg-gray-50 rounded-md space-y-2">
+        <div className="p-4 bg-gradient-to-r from-primary/10 via-accent/5 to-transparent dark:from-primary/20 dark:via-accent/10 rounded-xl border-2 border-primary/20 dark:border-primary/30 space-y-2">
           <div className="flex justify-between">
-            <span className="text-sm font-medium text-gray-700">Valor solicitado:</span>
-            <span className="text-sm font-medium">{formatCurrency(valor)}</span>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Valor solicitado:</span>
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(valor)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-sm font-medium text-gray-700">Juro ({juroEmprestimo}%):</span>
-            <span className="text-sm font-medium text-red-600">{formatCurrency(juro)}</span>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Juro ({juroEmprestimo}%):</span>
+            <span className="text-sm font-semibold text-red-600 dark:text-red-400">{formatCurrency(juro)}</span>
           </div>
-          <div className="border-t pt-2 flex justify-between">
-            <span className="font-bold text-gray-900">Total a devolver:</span>
-            <span className="font-bold text-gray-900">{formatCurrency(valorTotal)}</span>
+          <div className="border-t border-gray-300 dark:border-gray-600 pt-2 flex justify-between">
+            <span className="font-bold text-gray-900 dark:text-white">Total a devolver:</span>
+            <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(valorTotal)}</span>
           </div>
-          <div className="text-xs text-gray-600">
+          <div className="text-xs text-gray-600 dark:text-gray-400">
             Vencimento: {formatDate(dataVencimento.toISOString())} (até Novembro)
           </div>
         </div>
       </div>
 
-      <Button type="submit" className="w-full" disabled={loading || valor <= 0}>
+      <Button type="submit" className="w-full gradient-primary text-white border-0 hover:opacity-90" disabled={loading || valor <= 0}>
         {loading ? 'Solicitando...' : 'Solicitar Empréstimo'}
       </Button>
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-gray-500 dark:text-gray-400">
         O empréstimo precisa ser aprovado por um administrador. O valor deve ser devolvido até
         Novembro com juro de {juroEmprestimo}%.
       </p>

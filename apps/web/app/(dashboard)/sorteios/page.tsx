@@ -55,7 +55,7 @@ export default async function SorteiosPage() {
         .from('raffle_tickets')
         .select('numero_escolhido, status, user_id')
         .eq('raffle_id', currentRaffle.id)
-        .eq('status', 'confirmado')
+        .in('status', ['confirmado', 'reservado'])
     : null
 
   // Buscar meus números
@@ -86,14 +86,14 @@ export default async function SorteiosPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Sorteios</h1>
-        <p className="mt-2 text-sm text-gray-600">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Sorteios</h1>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
           Participe do sorteio mensal e concorra ao prêmio
         </p>
       </div>
 
       {isAdmin && (
-        <Card>
+        <Card variant="elevated">
           <CardHeader>
             <CardTitle>Acesso Restrito</CardTitle>
             <CardDescription>Administradores não podem participar de sorteios</CardDescription>
@@ -109,18 +109,27 @@ export default async function SorteiosPage() {
       {!isAdmin && (
         <>
           {currentRaffle && (
-            <Card>
+            <Card variant="gradient" className="relative overflow-hidden">
               <CardHeader>
-                <CardTitle>
-                  Sorteio de {new Date(currentRaffle.ano, currentRaffle.mes - 1).toLocaleString('pt-BR', {
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </CardTitle>
-                <CardDescription>
-                  Prêmio: {formatCurrency(currentRaffle.premio_valor)} | Valor por número:{' '}
-                  {formatCurrency(valorBilhete)}
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-white">
+                      Sorteio de {new Date(currentRaffle.ano, currentRaffle.mes - 1).toLocaleString('pt-BR', {
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </CardTitle>
+                    <CardDescription className="text-white/80">
+                      Prêmio: {formatCurrency(currentRaffle.premio_valor)} | Valor por número:{' '}
+                      {formatCurrency(valorBilhete)}
+                    </CardDescription>
+                  </div>
+                  <div className="rounded-lg p-3 bg-white/20">
+                    <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                    </svg>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 {currentRaffle.status === 'aberto' ? (
@@ -131,12 +140,12 @@ export default async function SorteiosPage() {
                     currentUserId={user.id}
                   />
                 ) : (
-                  <div className="p-4 bg-gray-50 rounded-md text-center">
-                    <p className="text-lg font-medium">
+                  <div className="p-6 bg-white/10 backdrop-blur-sm rounded-lg text-center">
+                    <p className="text-lg font-medium text-white">
                       {currentRaffle.status === 'sorteado' ? 'Sorteio realizado!' : 'Sorteio fechado'}
                     </p>
                     {currentRaffle.numero_sorteado && (
-                      <p className="text-2xl font-bold mt-2">Número sorteado: {currentRaffle.numero_sorteado}</p>
+                      <p className="text-3xl font-bold mt-3 text-white">Número sorteado: {currentRaffle.numero_sorteado}</p>
                     )}
                   </div>
                 )}
@@ -145,7 +154,7 @@ export default async function SorteiosPage() {
           )}
 
           {myTickets && myTickets.length > 0 && (
-            <Card>
+            <Card variant="elevated">
               <CardHeader>
                 <CardTitle>Meus Números</CardTitle>
                 <CardDescription>Números que você escolheu neste sorteio</CardDescription>

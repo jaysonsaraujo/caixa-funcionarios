@@ -2,48 +2,58 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 240 10% 98%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 262.1 83.3% 57.8%;
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.75rem;
+    --success: 142.1 76.2% 36.3%;
+    --warning: 38.7 92% 50%;
+    --info: 199.1 89.1% 48.2%;
   }
 
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 217.2 32.6% 12.5%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 217.2 32.6% 12.5%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
+    --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 75.1%;
+    --accent: 262.1 83.3% 57.8%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 72.2% 50.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
+    --border: 217.2 32.6% 25.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 221.2 83.2% 53.3%;
+    --success: 142.1 70.6% 55.3%;
+    --warning: 38.7 92% 60%;
+    --info: 199.1 89.1% 58.2%;
+  }
+  
+  html.dark {
+    color-scheme: dark;
   }
 }
 
@@ -52,7 +62,187 @@
     border-color: hsl(var(--border));
   }
   body {
-    background-color: hsl(var(--background));
+    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(240 10% 96%) 100%);
+    background-attachment: fixed;
     color: hsl(var(--foreground));
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
+  
+  .dark body {
+    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(222.2 84% 8%) 100%);
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  }
+  
+  .gradient-success {
+    background: linear-gradient(135deg, hsl(var(--success)) 0%, hsl(142.1 76.2% 45%) 100%);
+  }
+  
+  .gradient-warning {
+    background: linear-gradient(135deg, hsl(var(--warning)) 0%, hsl(38.7 92% 60%) 100%);
+  }
+  
+  .gradient-info {
+    background: linear-gradient(135deg, hsl(var(--info)) 0%, hsl(199.1 89.1% 58%) 100%);
+  }
+  
+  .card-shadow {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  }
+  
+  .card-shadow-lg {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+  
+  .card-shadow-xl {
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+  
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  
+  .dark .glass-effect {
+    background: rgba(30, 30, 40, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Reposicionar Next.js Dev Tools para o canto inferior direito */
+  /* Estratégia: mover qualquer elemento fixo na parte inferior esquerda */
+  button[aria-label*="Open Next.js Dev Tools"],
+  button[aria-label*="Next.js Dev Tools"],
+  button[aria-label*="Dev Tools"],
+  button[aria-label*="Open"],
+  button[data-nextjs-dev-indicator],
+  div[data-nextjs-dev-indicator] button,
+  [aria-label*="Next.js"],
+  [aria-label*="Dev Tools"] {
+    position: fixed !important;
+    left: auto !important;
+    right: 1rem !important;
+    bottom: 1rem !important;
+    top: auto !important;
+    z-index: 9999 !important;
+    transform: none !important;
+  }
+  
+  /* Regra adicional: qualquer elemento fixo na parte inferior esquerda (dentro de 100px da esquerda) */
+  @media (min-width: 1px) {
+    body > *[style*="position: fixed"]:not([style*="right"]):not([style*="left: auto"]) {
+      left: auto !important;
+      right: 1rem !important;
+    }
+  }
+}
+
+/* Regra CSS global fora do @layer para garantir máxima prioridade */
+/* BUG FIX: Next.js 16.1.4 tem um bug onde devIndicators.position não funciona */
+/* Solução: usar CSS para sobrescrever diretamente o elemento do Dev Tools */
+
+/* Seletor específico do Next.js Dev Tools Portal */
+nextjs-portal,
+nextjs-portal.dark,
+nextjs-portal[data-cursor-element-id],
+#__next-build-watcher,
+[data-nextjs-dev-indicator],
+button[aria-label*="Next"],
+button[aria-label*="Dev"],
+button[aria-label*="Open"],
+[aria-label*="Next"],
+[aria-label*="Dev"],
+[aria-label*="Open"] {
+  position: fixed !important;
+  left: auto !important;
+  right: 1rem !important;
+  bottom: 1rem !important;
+  top: auto !important;
+  z-index: 99999 !important;
+  transform: none !important;
+  margin: 0 !important;
+}
+
+/* Regra específica para o portal do Next.js - FORÇAR posição */
+nextjs-portal {
+  position: fixed !important;
+  left: auto !important;
+  right: 1rem !important;
+  top: auto !important;
+  bottom: 1rem !important;
+  transform: none !important;
+  margin: 0 !important;
+}
+
+/* Forçar também elementos dentro do portal */
+nextjs-portal > * {
+  position: relative !important;
+}
+
+/* REGRA ESPECÍFICA: Elemento do Dev Tools identificado pelo usuário */
+/* div#devtools-indicator.nextjs-toast - este é o elemento real! */
+#devtools-indicator,
+div#devtools-indicator,
+.nextjs-toast,
+div#devtools-indicator.nextjs-toast {
+  position: fixed !important;
+  left: auto !important;
+  right: 1rem !important;
+  bottom: 1rem !important;
+  top: auto !important;
+  z-index: 99999 !important;
+  transform: none !important;
+  margin: 0 !important;
+}
+
+/* REGRA UNIVERSAL: Qualquer elemento fixo na parte inferior esquerda vai para a direita */
+/* Esta regra força QUALQUER elemento com position fixed que esteja na parte inferior esquerda */
+*[style*="position: fixed"][style*="left: 0"],
+*[style*="position:fixed"][style*="left:0"],
+*[style*="position: fixed"][style*="left: 0px"],
+*[style*="position:fixed"][style*="left:0px"] {
+  left: auto !important;
+  right: 1rem !important;
+  bottom: 1rem !important;
+  top: auto !important;
+}
+
+/* REGRA CRÍTICA: Forçar QUALQUER elemento que contenha um botão com aria-label relacionado ao Next.js */
+/* Esta regra será aplicada via JavaScript, mas adicionamos CSS como backup */
+div:has(button[aria-label*="Next"]),
+div:has(button[aria-label*="Dev"]),
+div:has(button[aria-label*="Open"]),
+*:has(button[aria-label*="Next"]),
+*:has(button[aria-label*="Dev"]),
+*:has(button[aria-label*="Open"]) {
+  position: fixed !important;
+  left: auto !important;
+  right: 1rem !important;
+  bottom: 1rem !important;
+  top: auto !important;
+  z-index: 99999 !important;
+}
+
+/* Forçar qualquer elemento com position fixed que tenha left < 100px e bottom > altura-100px */
+@media (min-width: 1px) {
+  body > * {
+    position: relative;
+  }
+  
+  /* Esta regra será aplicada via JavaScript, mas adicionamos aqui como referência */
+}
+
+/* Regra universal: qualquer elemento fixo na parte inferior esquerda (dentro de 200px da esquerda) */
+/* Esta regra será aplicada via JavaScript inline, mas também adicionamos CSS como backup */
+body > * {
+  position: relative;
+}
+
+/* Forçar qualquer elemento com position fixed na parte inferior esquerda */
+@supports (position: fixed) {
+  /* Esta regra será aplicada via JavaScript, mas adicionamos aqui como referência */
 }

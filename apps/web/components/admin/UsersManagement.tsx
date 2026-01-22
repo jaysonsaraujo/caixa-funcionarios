@@ -25,7 +25,6 @@ export function UsersManagement() {
         .select('*')
         .neq('role', 'admin')
         .order('created_at', { ascending: false })
-        .limit(10)
 
       if (data) {
         setUsers(data)
@@ -50,29 +49,40 @@ export function UsersManagement() {
   }
 
   if (loading) {
-    return <div className="text-sm text-gray-600">Carregando...</div>
+    return <div className="text-sm text-gray-600 dark:text-gray-400">Carregando...</div>
   }
 
   return (
     <div className="space-y-4">
+      {users.length > 0 && (
+        <div className="text-sm text-gray-600 dark:text-gray-400 mb-4 font-medium">
+          Total de usuários: {users.length}
+        </div>
+      )}
       {users.map((user) => (
         <div
           key={user.id}
-          className="flex items-center justify-between p-3 border rounded-lg"
+          className="flex items-center justify-between p-4 border rounded-xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200"
         >
-          <div>
-            <p className="font-medium">{user.full_name || user.email}</p>
-            <p className="text-sm text-gray-600">{user.email}</p>
-            <p className="text-xs text-gray-500">
-              {user.role === 'cotista' ? 'Cotista' : 'Não Cotista'} | Cadastrado em:{' '}
-              {formatDate(user.created_at)}
-            </p>
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-full gradient-primary flex items-center justify-center text-white font-bold text-lg">
+              {(user.full_name || user.email || 'U').charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 dark:text-white">{user.full_name || user.email}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {user.role === 'cotista' ? 'Cotista' : 'Não Cotista'} | Cadastrado em:{' '}
+                {formatDate(user.created_at)}
+              </p>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button
               size="sm"
               variant={user.role === 'cotista' ? 'default' : 'outline'}
               onClick={() => updateUserRole(user.id, 'cotista')}
+              className={user.role === 'cotista' ? 'gradient-primary text-white border-0' : ''}
             >
               Cotista
             </Button>
@@ -80,14 +90,15 @@ export function UsersManagement() {
               size="sm"
               variant={user.role === 'nao_cotista' ? 'default' : 'outline'}
               onClick={() => updateUserRole(user.id, 'nao_cotista')}
+              className={user.role === 'nao_cotista' ? 'gradient-primary text-white border-0' : ''}
             >
               Não Cotista
             </Button>
           </div>
         </div>
       ))}
-      {users.length === 0 && (
-        <p className="text-sm text-gray-600">Nenhum usuário encontrado</p>
+      {users.length === 0 && !loading && (
+        <p className="text-sm text-gray-600 dark:text-gray-400 text-center py-8">Nenhum usuário encontrado</p>
       )}
     </div>
   )

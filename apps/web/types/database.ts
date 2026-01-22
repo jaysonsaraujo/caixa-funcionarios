@@ -203,6 +203,10 @@ export interface Database {
           data_reserva: string
           data_vencimento_reserva: string
           status: 'reservado' | 'confirmado' | 'liberado'
+          pagamento_status: 'pendente' | 'pago' | 'atrasado' | 'aguardando_confirmacao'
+          forma_pagamento: 'PIX' | 'dinheiro' | null
+          comprovante_url: string | null
+          data_pagamento: string | null
           created_at: string
           updated_at: string
         }
@@ -215,6 +219,10 @@ export interface Database {
           data_reserva?: string
           data_vencimento_reserva: string
           status?: 'reservado' | 'confirmado' | 'liberado'
+          pagamento_status?: 'pendente' | 'pago' | 'atrasado' | 'aguardando_confirmacao'
+          forma_pagamento?: 'PIX' | 'dinheiro' | null
+          comprovante_url?: string | null
+          data_pagamento?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -227,6 +235,10 @@ export interface Database {
           data_reserva?: string
           data_vencimento_reserva?: string
           status?: 'reservado' | 'confirmado' | 'liberado'
+          pagamento_status?: 'pendente' | 'pago' | 'atrasado' | 'aguardando_confirmacao'
+          forma_pagamento?: 'PIX' | 'dinheiro' | null
+          comprovante_url?: string | null
+          data_pagamento?: string | null
           created_at?: string
           updated_at?: string
         }
