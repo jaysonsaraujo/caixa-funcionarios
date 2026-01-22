@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/shared/Button'
 import { Input } from '@/components/shared/Input'
 import { Label } from '@/components/shared/Label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/shared/Card'
+import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import Link from 'next/link'
 
 export default function LoginPage() {
@@ -14,8 +16,25 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isDark, setIsDark] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    const updateTheme = () => {
+      setIsDark(document.documentElement.classList.contains('dark'))
+    }
+
+    updateTheme()
+
+    const observer = new MutationObserver(updateTheme)
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
+
+    return () => observer.disconnect()
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,9 +55,36 @@ export default function LoginPage() {
     }
   }
 
+  const cardClasses = isDark
+    ? 'bg-gray-950/80 text-gray-100 border-white/10'
+    : 'bg-white/95 text-gray-900 border-white/30'
+
+  const titleClasses = isDark ? 'text-gray-100' : 'text-gray-900'
+  const descriptionClasses = isDark ? 'text-gray-300' : 'text-gray-700'
+  const labelClasses = isDark ? 'text-gray-200' : 'text-gray-900'
+  const footerClasses = isDark ? 'text-gray-300' : 'text-gray-700'
+  const backgroundImage = isDark ? '/login-dark-bg.png' : '/login-light-bg.png'
+  const backgroundOverlayClasses = isDark ? 'bg-black/50' : 'bg-white/35'
+  const inputClasses = isDark
+    ? 'transition-all focus:ring-2 focus:ring-primary bg-gray-900/90 text-gray-100 placeholder:text-gray-400'
+    : 'transition-all focus:ring-2 focus:ring-primary bg-white/90 text-gray-900 placeholder:text-gray-500'
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center px-4 relative text-gray-900 dark:text-gray-100 overflow-hidden">
+      <div className="absolute inset-0" aria-hidden="true">
+        <Image
+          src={backgroundImage}
+          alt=""
+          fill
+          priority
+          className="object-cover"
+        />
+        <div className={`absolute inset-0 ${backgroundOverlayClasses}`} />
+      </div>
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeToggle className="bg-white/90 text-gray-900 border-white/60 shadow-sm hover:bg-white dark:bg-gray-900/80 dark:text-gray-100 dark:border-white/20" />
+      </div>
+      <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl gradient-primary mb-4">
             <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -49,22 +95,25 @@ export default function LoginPage() {
             Sistema de Caixinha
           </h1>
         </div>
-        <Card variant="elevated" className="w-full">
+        <Card
+          variant="elevated"
+          className={`w-full backdrop-blur-md border ${cardClasses}`}
+        >
           <CardHeader>
-            <CardTitle>Login</CardTitle>
-            <CardDescription>
+            <CardTitle className={titleClasses}>Login</CardTitle>
+            <CardDescription className={descriptionClasses}>
               Entre com suas credenciais para acessar o sistema
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               {error && (
-                <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-200">
+                <div className="p-3 text-sm text-red-600 dark:text-red-200 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800">
                   {error}
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className={labelClasses}>Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -72,25 +121,25 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="transition-all focus:ring-2 focus:ring-primary"
+                  className={inputClasses}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
+                <Label htmlFor="password" className={labelClasses}>Senha</Label>
                 <Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="transition-all focus:ring-2 focus:ring-primary"
+                  className={inputClasses}
                 />
               </div>
               <Button type="submit" className="w-full gradient-primary text-white border-0 hover:opacity-90" disabled={loading}>
                 {loading ? 'Entrando...' : 'Entrar'}
               </Button>
             </form>
-            <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+            <div className={`mt-4 text-center text-sm ${footerClasses}`}>
               Não tem uma conta?{' '}
               <Link href="/signup" className="text-primary dark:text-primary hover:underline font-medium">
                 Cadastre-se

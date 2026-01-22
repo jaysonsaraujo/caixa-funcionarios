@@ -77,7 +77,7 @@ export function VersionBadge() {
   return (
     <Link
       href="/changelog"
-      className="relative inline-flex items-center px-2 py-1 rounded-md text-xs font-mono bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-colors cursor-pointer"
+      className="relative inline-flex items-center px-2 py-1 rounded-md text-xs font-mono bg-gray-100 dark:!bg-gray-900 text-gray-700 dark:!text-gray-100 border border-gray-300 dark:!border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-white transition-colors cursor-pointer"
       title={hasNew ? 'Nova versão disponível! Clique para ver novidades' : 'Ver histórico de atualizações'}
     >
       v{version}

@@ -15,7 +15,8 @@
     "version": "node scripts/version.js",
     "version:patch": "node scripts/version.js patch",
     "version:minor": "node scripts/version.js minor",
-    "version:major": "node scripts/version.js major"
+    "version:major": "node scripts/version.js major",
+    "seed:simulation": "npm run seed:simulation -w web"
   },
   "devDependencies": {
     "typescript": "^5.3.3"

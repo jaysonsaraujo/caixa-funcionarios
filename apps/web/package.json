@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:simulation": "node scripts/seed-simulation-12-users.js"
   },
   "dependencies": {
     "@next/swc-win32-x64-msvc": "^16.1.4",

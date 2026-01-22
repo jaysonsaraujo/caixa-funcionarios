@@ -121,7 +121,7 @@ export default function RootLayout({
                     if (movedElements.has(btn)) continue;
                     
                     const ariaLabel = (btn.getAttribute('aria-label') || '').toLowerCase();
-                    if (ariaLabel.includes('next') || ariaLabel.includes('dev') || ariaLabel.includes('open')) {
+                    if (ariaLabel.includes('next') || ariaLabel.includes('dev') || ariaLabel.includes('open') || ariaLabel.includes('issue')) {
                       const rect = btn.getBoundingClientRect();
                       if (rect.left < window.innerWidth / 2) {
                         // Mover o botão
@@ -165,6 +165,32 @@ export default function RootLayout({
                       }
                     }
                   }
+
+                  // Mover alerta de issues (quando existir)
+                  const issueButtons = document.querySelectorAll('button[aria-label*="issues"], button[aria-label*="Issue"]');
+                  issueButtons.forEach((issueBtn) => {
+                    if (movedElements.has(issueBtn)) return;
+                    issueBtn.style.setProperty('position', 'fixed', 'important');
+                    issueBtn.style.setProperty('left', 'auto', 'important');
+                    issueBtn.style.setProperty('right', '1rem', 'important');
+                    issueBtn.style.setProperty('bottom', '1rem', 'important');
+                    issueBtn.style.setProperty('top', 'auto', 'important');
+                    issueBtn.style.setProperty('z-index', '99999', 'important');
+                    issueBtn.style.setProperty('transform', 'none', 'important');
+                    movedElements.add(issueBtn);
+
+                    const parent = issueBtn.parentElement;
+                    if (parent && !movedElements.has(parent)) {
+                      parent.style.setProperty('position', 'fixed', 'important');
+                      parent.style.setProperty('left', 'auto', 'important');
+                      parent.style.setProperty('right', '1rem', 'important');
+                      parent.style.setProperty('bottom', '1rem', 'important');
+                      parent.style.setProperty('top', 'auto', 'important');
+                      parent.style.setProperty('z-index', '99998', 'important');
+                      parent.style.setProperty('transform', 'none', 'important');
+                      movedElements.add(parent);
+                    }
+                  });
                   
                   // TERCEIRO: Procurar todos os elementos visíveis na parte inferior esquerda
                   const allElements = document.querySelectorAll('*');
@@ -280,32 +306,105 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                function moveDevToolsIndicator() {
-                  const portal = document.querySelector('nextjs-portal');
+                var panelStyleId = 'caixa-devtools-panel-right';
+
+                function injectPanelStyles(root) {
+                  if (root.querySelector('#' + panelStyleId)) return;
+                  var doc = root.host && root.host.ownerDocument ? root.host.ownerDocument : document;
+                  var style = doc.createElement('style');
+                  style.id = panelStyleId;
+                  style.textContent = '#panel-route, .panel-route, #nextjs-dev-tools-menu, .dynamic-panel-container, .panel-content-container { left: auto !important; right: 0 !important; transform: none !important; transform-origin: right center !important; }';
+                  root.appendChild(style);
+                }
+
+                function moveDevToolsToRight() {
+                  var portal = document.querySelector('nextjs-portal');
                   if (!portal || !portal.shadowRoot) return;
 
-                  const indicator = portal.shadowRoot.querySelector('#devtools-indicator');
-                  if (!indicator) return;
+                  var root = portal.shadowRoot;
 
-                  indicator.style.setProperty('position', 'fixed', 'important');
-                  indicator.style.setProperty('left', 'auto', 'important');
-                  indicator.style.setProperty('right', '1rem', 'important');
-                  indicator.style.setProperty('bottom', '1rem', 'important');
-                  indicator.style.setProperty('top', 'auto', 'important');
-                  indicator.style.setProperty('z-index', '99999', 'important');
-                  indicator.style.setProperty('transform', 'none', 'important');
+                  injectPanelStyles(root);
+
+                  var indicator = root.querySelector('#devtools-indicator');
+                  var bottomOffset = '1rem';
+                  if (indicator) {
+                    var rect = indicator.getBoundingClientRect();
+                    var gap = 8;
+                    var calcBottom = Math.round(window.innerHeight - rect.top + gap);
+                    bottomOffset = Math.max(16, calcBottom) + 'px';
+
+                    indicator.style.setProperty('position', 'fixed', 'important');
+                    indicator.style.setProperty('left', 'auto', 'important');
+                    indicator.style.setProperty('right', '1rem', 'important');
+                    indicator.style.setProperty('bottom', '1rem', 'important');
+                    indicator.style.setProperty('top', 'auto', 'important');
+                    indicator.style.setProperty('z-index', '99999', 'important');
+                    indicator.style.setProperty('transform', 'none', 'important');
+                  }
+
+                  var panel = root.querySelector('#panel-route');
+                  if (panel) {
+                    panel.style.setProperty('position', 'fixed', 'important');
+                    panel.style.setProperty('left', 'auto', 'important');
+                    panel.style.setProperty('right', '0', 'important');
+                    panel.style.setProperty('top', '0', 'important');
+                    panel.style.setProperty('bottom', '0', 'important');
+                    panel.style.setProperty('z-index', '99998', 'important');
+                    panel.style.setProperty('transform', 'none', 'important');
+                    panel.style.setProperty('transform-origin', 'right center', 'important');
+                  }
+
+                  var menu = root.querySelector('#nextjs-dev-tools-menu');
+                  if (menu) {
+                    menu.style.setProperty('position', 'fixed', 'important');
+                    menu.style.setProperty('left', 'auto', 'important');
+                    menu.style.setProperty('right', '1rem', 'important');
+                    menu.style.setProperty('bottom', bottomOffset, 'important');
+                    menu.style.setProperty('top', 'auto', 'important');
+                    menu.style.setProperty('z-index', '2147483647', 'important');
+                    menu.style.setProperty('transform', 'none', 'important');
+                  }
+
+                  var dynamicPanels = root.querySelectorAll('.dynamic-panel-container');
+                  dynamicPanels.forEach(function(panelEl) {
+                    panelEl.style.setProperty('position', 'fixed', 'important');
+                    panelEl.style.setProperty('left', 'auto', 'important');
+                    panelEl.style.setProperty('right', '1rem', 'important');
+                    panelEl.style.setProperty('top', 'auto', 'important');
+                    panelEl.style.setProperty('bottom', bottomOffset, 'important');
+                    panelEl.style.setProperty('z-index', '2147483646', 'important');
+                    panelEl.style.setProperty('transform', 'none', 'important');
+                  });
+
+                  var panelContents = root.querySelectorAll('.panel-content-container');
+                  panelContents.forEach(function(contentEl) {
+                    contentEl.style.setProperty('left', 'auto', 'important');
+                    contentEl.style.setProperty('right', '0', 'important');
+                    contentEl.style.setProperty('transform', 'none', 'important');
+                  });
+
+                  var issueButtons = root.querySelectorAll('button[aria-label*="issues"], button[aria-label*="Issue"]');
+                  issueButtons.forEach(function(issueBtn) {
+                    issueBtn.style.setProperty('position', 'fixed', 'important');
+                    issueBtn.style.setProperty('left', 'auto', 'important');
+                    issueBtn.style.setProperty('right', '1rem', 'important');
+                    issueBtn.style.setProperty('bottom', '1rem', 'important');
+                    issueBtn.style.setProperty('top', 'auto', 'important');
+                    issueBtn.style.setProperty('z-index', '2147483647', 'important');
+                    issueBtn.style.setProperty('transform', 'none', 'important');
+                  });
                 }
 
-                moveDevToolsIndicator();
+                moveDevToolsToRight();
 
                 if (document.readyState === 'loading') {
-                  document.addEventListener('DOMContentLoaded', moveDevToolsIndicator);
+                  document.addEventListener('DOMContentLoaded', moveDevToolsToRight);
                 }
 
-                const observer = new MutationObserver(moveDevToolsIndicator);
+                var observer = new MutationObserver(moveDevToolsToRight);
                 observer.observe(document.documentElement, { childList: true, subtree: true });
 
-                setInterval(moveDevToolsIndicator, 250);
+                setInterval(moveDevToolsToRight, 250);
               })();
             `,
           }}

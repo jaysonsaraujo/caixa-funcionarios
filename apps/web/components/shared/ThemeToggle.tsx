@@ -3,7 +3,11 @@
 import { useEffect, useState } from 'react'
 import { Button } from './Button'
 
-export function ThemeToggle() {
+type ThemeToggleProps = {
+  className?: string
+}
+
+export function ThemeToggle({ className }: ThemeToggleProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [mounted, setMounted] = useState(false)
 
@@ -37,7 +41,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="h-9 w-9 rounded-lg bg-gray-200 dark:bg-gray-700" />
+      <div className={`h-9 w-9 rounded-lg bg-gray-200 dark:bg-gray-700 ${className || ''}`} />
     )
   }
 
@@ -46,7 +50,7 @@ export function ThemeToggle() {
       variant="outline"
       size="sm"
       onClick={toggleTheme}
-      className="h-9 w-9 p-0"
+      className={`h-9 w-9 p-0 ${className || ''}`}
       aria-label={theme === 'light' ? 'Ativar tema escuro' : 'Ativar tema claro'}
     >
       {theme === 'light' ? (

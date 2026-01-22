@@ -284,7 +284,7 @@ export function AdminDashboard() {
           {stats.sorteioMes && (
             <Card
               variant="elevated"
-              className="relative overflow-hidden bg-slate-50/95 dark:bg-slate-800/85 border border-gray-200/70 dark:border-slate-700/80"
+              className="relative overflow-hidden bg-white dark:bg-gray-900/80 border border-gray-200/70 dark:border-slate-700/80"
             >
               <CardHeader>
                 <CardTitle className="text-base text-gray-900 dark:text-white">Sorteio do Mês</CardTitle>

@@ -104,13 +104,50 @@
   
   .glass-effect {
     background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
   }
   
   .dark .glass-effect {
     background: rgba(30, 30, 40, 0.8);
     border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .dark .app-nav a {
+    color: hsl(var(--foreground));
+  }
+
+  .dark .app-nav a:hover {
+    color: hsl(var(--primary));
+  }
+
+  .dark .bg-white {
+    background-color: hsl(var(--card)) !important;
+  }
+
+  .dark .bg-gray-50,
+  .dark .bg-gray-100,
+  .dark .bg-gray-200,
+  .dark .bg-slate-50,
+  .dark .bg-slate-100,
+  .dark .bg-slate-200 {
+    background-color: hsl(var(--card)) !important;
+  }
+
+  .dark .border-gray-200 {
+    border-color: hsl(var(--border)) !important;
+  }
+
+  .dark .text-gray-900,
+  .dark .text-gray-800,
+  .dark .text-gray-700 {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  .dark .text-gray-600,
+  .dark .text-gray-500,
+  .dark .text-gray-400 {
+    color: hsl(var(--muted-foreground)) !important;
   }
   
   /* Reposicionar Next.js Dev Tools para o canto inferior direito */

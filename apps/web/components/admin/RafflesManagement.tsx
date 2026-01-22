@@ -289,7 +289,7 @@ export function RafflesManagement() {
                     ? 'bg-green-500 text-white'
                     : status === 'reservado'
                       ? 'bg-yellow-500 text-white'
-                      : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'
+                      : 'bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900/40 dark:text-blue-100 dark:border-blue-800'
                 }`}
               >
                 {num}
@@ -307,7 +307,7 @@ export function RafflesManagement() {
             Reservados
           </span>
           <span className="inline-flex items-center gap-2">
-            <span className="h-3 w-3 rounded-sm bg-gray-300 dark:bg-gray-600" />
+            <span className="h-3 w-3 rounded-sm bg-blue-200 dark:bg-blue-800/60 border border-blue-300 dark:border-blue-700" />
             Disponíveis
           </span>
         </div>
@@ -381,19 +381,19 @@ export function RafflesManagement() {
                 return (
                   <div key={userId} className="border-2 border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-800">
                     {/* Cabeçalho do Usuário */}
-                    <div className="bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-900/30 dark:to-blue-800/20 px-6 py-4 border-b border-blue-200 dark:border-blue-800">
+                    <div className="bg-[hsl(var(--card))] px-6 py-4 border-b border-blue-200 dark:border-gray-700">
                       <div className="flex items-center justify-between">
                         <div>
                           <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
                             {group.user.full_name || 'Sem nome'}
                           </h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{group.user.email}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-100">{group.user.email}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                          <p className="text-sm text-gray-700 dark:text-gray-100">
                             <strong>Total de números:</strong> {userTickets.length}
                           </p>
-                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                          <p className="text-sm text-gray-700 dark:text-gray-100">
                             <strong>Confirmados:</strong>{' '}
                             {userTickets.filter((t) => t.status === 'confirmado').length} |{' '}
                             <strong>Reservados:</strong>{' '}

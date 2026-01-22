@@ -27,11 +27,11 @@ export default async function DashboardLayout({
 
   const isAdmin = profile?.role === 'admin'
   const navLinkClass =
-    'inline-flex items-center rounded-lg font-medium text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-800/50 hover:text-primary dark:hover:text-primary transition-all duration-200 px-1.5 py-1 text-xs sm:text-xs sm:px-2 sm:py-1.5 md:text-sm md:px-3 md:py-2'
+    'inline-flex items-center rounded-lg font-medium text-gray-700 dark:text-gray-100 dark:!text-gray-100 hover:bg-white/50 dark:hover:bg-gray-800/50 hover:text-primary dark:hover:text-primary transition-all duration-200 px-1.5 py-1 text-xs sm:text-xs sm:px-2 sm:py-1.5 md:text-sm md:px-3 md:py-2'
 
   return (
     <div className="min-h-screen">
-      <nav className="glass-effect dark:bg-gray-900/80 border-b border-white/20 dark:border-gray-700/50 backdrop-blur-md sticky top-0 z-50">
+      <nav className="app-nav glass-effect dark:bg-gray-900/80 border-b border-white/20 dark:border-gray-700/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center min-h-16 py-2 gap-1">
             <div className="flex items-center gap-0 overflow-hidden">
@@ -136,7 +136,7 @@ export default async function DashboardLayout({
                   Sair
                 </Button>
               </form>
-              <ThemeToggle />
+              <ThemeToggle className="bg-gray-900/80 text-gray-100 border-gray-600 hover:bg-gray-800/90 shadow-sm" />
             </div>
           </div>
         </div>
