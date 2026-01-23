@@ -25,12 +25,35 @@ interface TicketWithUser {
   }
 }
 
+interface YearRaffleSummary {
+  id: string
+  mes: number
+  ano: number
+  premio_valor: number
+  status: 'aberto' | 'fechado' | 'sorteado'
+  numero_sorteado: number | null
+  resultado_loteria: string | null
+  total_arrecadado: number
+  total_confirmados: number
+  winners: Array<{
+    id: string
+    full_name: string | null
+    email: string
+    numero_escolhido: number
+  }>
+}
+
 export function RafflesManagement() {
   const [raffle, setRaffle] = useState<any>(null)
   const [resultadoLoteria, setResultadoLoteria] = useState('')
   const [tickets, setTickets] = useState<TicketWithUser[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingTickets, setLoadingTickets] = useState(true)
+  const [yearSummary, setYearSummary] = useState<YearRaffleSummary[]>([])
+  const [loadingYear, setLoadingYear] = useState(true)
+  const [availableYears, setAvailableYears] = useState<number[]>([])
+  const [selectedYear, setSelectedYear] = useState<number | null>(null)
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null)
   const supabase = createClient()
 
   const hoje = new Date()
@@ -84,6 +107,111 @@ export function RafflesManagement() {
     setLoadingTickets(false)
   }, [supabase])
 
+  const loadYearSummary = useCallback(async (year: number) => {
+    setLoadingYear(true)
+
+    const { data: rafflesData, error: rafflesError } = await supabase
+      .from('monthly_raffles')
+      .select('id, mes, ano, premio_valor, status, numero_sorteado, resultado_loteria')
+      .eq('ano', year)
+      .order('mes', { ascending: true })
+
+    if (rafflesError || !rafflesData || rafflesData.length === 0) {
+      setYearSummary([])
+      setLoadingYear(false)
+      return
+    }
+
+    const raffleIds = rafflesData.map((r) => r.id)
+    const raffleById = new Map(rafflesData.map((r) => [r.id, r]))
+
+    const { data: ticketsData } = await supabase
+      .from('raffle_tickets')
+      .select('raffle_id, numero_escolhido, valor_pago, pagamento_status, status, user_id')
+      .in('raffle_id', raffleIds)
+
+    const totalsByRaffle = new Map<string, { total: number; confirmados: number }>()
+    const winnersByRaffle = new Map<string, Array<{ user_id: string; numero_escolhido: number }>>()
+
+    ;(ticketsData || []).forEach((ticket) => {
+      const raffle = raffleById.get(ticket.raffle_id)
+      if (!raffle) return
+
+      const pago = ticket.pagamento_status === 'pago' || ticket.status === 'confirmado'
+      if (pago) {
+        const current = totalsByRaffle.get(ticket.raffle_id) || { total: 0, confirmados: 0 }
+        totalsByRaffle.set(ticket.raffle_id, {
+          total: current.total + Number(ticket.valor_pago || 0),
+          confirmados: current.confirmados + 1,
+        })
+      }
+
+      if (
+        raffle.numero_sorteado &&
+        ticket.numero_escolhido === raffle.numero_sorteado &&
+        ticket.status === 'confirmado'
+      ) {
+        const current = winnersByRaffle.get(ticket.raffle_id) || []
+        current.push({ user_id: ticket.user_id, numero_escolhido: ticket.numero_escolhido })
+        winnersByRaffle.set(ticket.raffle_id, current)
+      }
+    })
+
+    const winnerUserIds = Array.from(
+      new Set(
+        Array.from(winnersByRaffle.values())
+          .flat()
+          .map((w) => w.user_id)
+      )
+    )
+
+    let usersMap = new Map<string, { full_name: string | null; email: string }>()
+    if (winnerUserIds.length > 0) {
+      const { data: usersData } = await supabase
+        .from('users')
+        .select('id, full_name, email')
+        .in('id', winnerUserIds)
+      usersMap = new Map(
+        (usersData || []).map((u: any) => [u.id, { full_name: u.full_name, email: u.email }])
+      )
+    }
+
+    const summary = rafflesData.map((raffle) => {
+      const totals = totalsByRaffle.get(raffle.id) || { total: 0, confirmados: 0 }
+      const winners = (winnersByRaffle.get(raffle.id) || [])
+        .map((winner) => ({
+          id: winner.user_id,
+          numero_escolhido: winner.numero_escolhido,
+          full_name: usersMap.get(winner.user_id)?.full_name || null,
+          email: usersMap.get(winner.user_id)?.email || 'N/A',
+        }))
+        .sort((a, b) => a.numero_escolhido - b.numero_escolhido)
+
+      return {
+        ...raffle,
+        total_arrecadado: totals.total,
+        total_confirmados: totals.confirmados,
+        winners,
+      }
+    })
+
+    setYearSummary(summary)
+    setLoadingYear(false)
+  }, [supabase])
+
+  const loadAvailableYears = useCallback(async () => {
+    const { data } = await supabase
+      .from('monthly_raffles')
+      .select('ano')
+      .order('ano', { ascending: false })
+
+    const years = Array.from(new Set((data || []).map((row) => row.ano)))
+    setAvailableYears(years)
+    if (years.length > 0 && selectedYear === null) {
+      setSelectedYear(years[0])
+    }
+  }, [supabase, selectedYear])
+
   useEffect(() => {
     const loadRaffle = async () => {
       const { data } = await supabase
@@ -102,7 +230,29 @@ export function RafflesManagement() {
     }
 
     loadRaffle()
-  }, [supabase, mesAtual, anoAtual, loadTickets])
+    loadAvailableYears()
+  }, [supabase, mesAtual, anoAtual, loadTickets, loadAvailableYears])
+
+  useEffect(() => {
+    if (selectedYear) {
+      loadYearSummary(selectedYear)
+    }
+  }, [selectedYear, loadYearSummary])
+
+  useEffect(() => {
+    if (selectedYear !== null) {
+      setSelectedMonth(null)
+    }
+  }, [selectedYear])
+
+  useEffect(() => {
+    if (yearSummary.length === 0) return
+    const months = yearSummary.map((r) => r.mes)
+    const latestMonth = months[months.length - 1]
+    if (selectedMonth === null || !months.includes(selectedMonth)) {
+      setSelectedMonth(latestMonth)
+    }
+  }, [yearSummary, selectedMonth])
 
   const confirmTicketsPayment = async (ticketsToConfirm: TicketWithUser[]) => {
     if (!raffle || ticketsToConfirm.length === 0) return
@@ -232,6 +382,25 @@ export function RafflesManagement() {
   const reservedCount = tickets.filter((t) => t.status === 'reservado').length
   const chosenCount = confirmedCount + reservedCount
   const availableCount = 100 - chosenCount
+  const monthLabels = [
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro',
+  ]
+  const displayYear = selectedYear ?? anoAtual
+  const filteredSummary =
+    selectedMonth === null
+      ? yearSummary
+      : yearSummary.filter((raffleYear) => raffleYear.mes === selectedMonth)
 
   return (
     <div className="space-y-4">
@@ -311,6 +480,139 @@ export function RafflesManagement() {
             Disponíveis
           </span>
         </div>
+      </div>
+
+      <div className="mt-6 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Resumo de Sorteios {displayYear}
+          </h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="w-40">
+              <select
+                className="h-9 w-full rounded-md border-2 border-input dark:border-gray-600 bg-background dark:bg-gray-800 px-2 text-sm text-gray-900 dark:text-gray-100"
+                value={String(displayYear)}
+                onChange={(event) => setSelectedYear(Number(event.target.value))}
+                aria-label="Selecionar ano"
+              >
+                {availableYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="w-44">
+              <select
+                className="h-9 w-full rounded-md border-2 border-input dark:border-gray-600 bg-background dark:bg-gray-800 px-2 text-sm text-gray-900 dark:text-gray-100"
+                value={selectedMonth ? String(selectedMonth) : ''}
+                onChange={(event) => {
+                  const value = event.target.value
+                  setSelectedMonth(value ? Number(value) : null)
+                }}
+                aria-label="Selecionar mês"
+              >
+                <option value="" disabled>
+                  Selecione o mês
+                </option>
+                {monthLabels.map((label, index) => (
+                  <option key={label} value={index + 1}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => loadYearSummary(displayYear)}
+              disabled={loadingYear}
+            >
+              {loadingYear ? 'Carregando...' : 'Atualizar'}
+            </Button>
+          </div>
+        </div>
+
+        {loadingYear ? (
+          <div className="text-sm text-gray-600 dark:text-gray-400">Carregando resumo...</div>
+        ) : filteredSummary.length === 0 ? (
+          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-center text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+            Nenhum sorteio encontrado para o filtro selecionado.
+          </div>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-2">
+            {filteredSummary.map((raffleYear) => {
+              const periodo = new Date(raffleYear.ano, raffleYear.mes - 1).toLocaleString(
+                'pt-BR',
+                {
+                  month: 'long',
+                  year: 'numeric',
+                }
+              )
+              return (
+                <div
+                  key={raffleYear.id}
+                  className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {periodo}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Status:{' '}
+                        {raffleYear.status === 'aberto'
+                          ? 'Aberto'
+                          : raffleYear.status === 'fechado'
+                            ? 'Fechado'
+                            : 'Sorteado'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        Prêmio: {formatCurrency(raffleYear.premio_valor)}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Arrecadado: {formatCurrency(raffleYear.total_arrecadado)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid gap-1 text-xs text-gray-600 dark:text-gray-300">
+                    <span>Número sorteado: {raffleYear.numero_sorteado ?? '—'}</span>
+                    {raffleYear.resultado_loteria && (
+                      <span>Resultado: {raffleYear.resultado_loteria}</span>
+                    )}
+                    <span>Bilhetes pagos: {raffleYear.total_confirmados}</span>
+                  </div>
+
+                  <div className="mt-3">
+                    <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                      Ganhadores
+                    </p>
+                    {raffleYear.winners.length > 0 ? (
+                      <div className="mt-2 space-y-1 text-xs text-gray-700 dark:text-gray-300">
+                        {raffleYear.winners.map((winner) => (
+                          <div
+                            key={`${raffleYear.id}-${winner.id}-${winner.numero_escolhido}`}
+                            className="flex items-center justify-between"
+                          >
+                            <span>{winner.full_name || winner.email}</span>
+                            <span>Nº {winner.numero_escolhido}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        Sem ganhador neste mês.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Histórico de Escolhas dos Usuários */}

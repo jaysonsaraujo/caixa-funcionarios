@@ -57,8 +57,9 @@ const CONFIG = {
   juro_emprestimo_nao_cotista: 5,
 }
 
-const ANO = 2024
+const ANO = new Date().getFullYear()
 const MESES = 12
+const EMAIL_PREFIX = `simulacao${ANO}`
 
 function getNthBusinessDay(year, month, n) {
   const date = new Date(year, month - 1, 1)
@@ -87,7 +88,7 @@ async function main() {
   const participants = []
 
   for (let i = 1; i <= 12; i++) {
-    const email = `simulacao${String(i).padStart(2, '0')}@caixa.local`
+    const email = `${EMAIL_PREFIX}${String(i).padStart(2, '0')}@caixa.local`
     const password = `Simulacao${String(i).padStart(2, '0')}!`
     const fullName = NOMES[i - 1]
 
@@ -99,15 +100,31 @@ async function main() {
     })
 
     if (error) {
-      console.error(`Erro ao criar ${email}:`, error.message)
-      continue
+      const msg = (error.message || '').toLowerCase()
+      if (msg.includes('already') || msg.includes('exists')) {
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', email)
+          .single()
+        if (!existingUser?.id) {
+          console.error(`Erro ao criar ${email}:`, error.message)
+          continue
+        }
+        const id = existingUser.id
+        participants.push({ id, email, password, fullName, index: i })
+        await supabase.from('users').update({ role: 'cotista', full_name: fullName }).eq('id', id)
+        console.log(`Usuário ${i}/12 (reaproveitado): ${email}`)
+      } else {
+        console.error(`Erro ao criar ${email}:`, error.message)
+        continue
+      }
+    } else {
+      const id = data.user.id
+      participants.push({ id, email, password, fullName, index: i })
+      await supabase.from('users').update({ role: 'cotista', full_name: fullName }).eq('id', id)
+      console.log(`Usuário ${i}/12: ${email}`)
     }
-
-    const id = data.user.id
-    participants.push({ id, email, password, fullName, index: i })
-
-    await supabase.from('users').update({ role: 'cotista', full_name: fullName }).eq('id', id)
-    console.log(`Usuário ${i}/12: ${email}`)
   }
 
   if (participants.length !== 12) {
@@ -125,13 +142,13 @@ async function main() {
     const userId = idByIndex(i + 1)
     const { data: q, error } = await supabase
       .from('quotas')
-      .insert({
+      .upsert({
         user_id: userId,
         num_cotas: numCotasByUser[i],
         valor_por_cota: valorCotaByUser[i],
         status: 'ativa',
         data_cadastro: `${ANO}-01-01`,
-      })
+      }, { onConflict: 'user_id' })
       .select('id, user_id, num_cotas, valor_por_cota')
       .single()
 
@@ -141,6 +158,9 @@ async function main() {
     }
     quotas.push({ ...q, userIndex: i + 1 })
   }
+
+  const quotaIds = quotas.map((q) => q.id)
+  await supabase.from('quota_payments').delete().in('quota_id', quotaIds).eq('ano_referencia', ANO)
 
   for (const q of quotas) {
     const base = q.num_cotas * q.valor_por_cota
@@ -153,7 +173,7 @@ async function main() {
         ? new Date(ANO, mes - 1, 10 + Math.floor(Math.random() * 10))
         : new Date(venc)
 
-      const { error } = await supabase.from('quota_payments').insert({
+      const payload = {
         quota_id: q.id,
         mes_referencia: mes,
         ano_referencia: ANO,
@@ -163,7 +183,9 @@ async function main() {
         juro_aplicado: juro,
         status: 'pago',
         forma_pagamento: forma,
-      })
+      }
+
+      const { error } = await supabase.from('quota_payments').insert(payload)
       if (error) console.error('Erro quota_payment', q.userIndex, mes, error.message)
     }
   }
@@ -175,6 +197,14 @@ async function main() {
   ]
   const tipoUser = () => (Math.random() < 0.5 ? 'cotista' : 'nao_cotista')
   const juroPorTipo = (t) => (t === 'cotista' ? CONFIG.juro_emprestimo_cotista : CONFIG.juro_emprestimo_nao_cotista)
+
+  const userIdsSim = participants.map((p) => p.id)
+  await supabase
+    .from('loans')
+    .delete()
+    .in('user_id', userIdsSim)
+    .gte('data_solicitacao', `${ANO}-01-01`)
+    .lte('data_solicitacao', `${ANO}-12-31`)
 
   for (let i = 0; i < 12; i++) {
     const userId = idByIndex(i + 1)
@@ -203,20 +233,54 @@ async function main() {
       if (error) console.error('Erro loan user', i + 1, error.message)
     }
   }
+
+  for (let mes = 1; mes <= MESES; mes++) {
+    const userId = idByIndex(((mes - 1) % 12) + 1)
+    const valor = 900 + mes * 25
+    const tipo = 'cotista'
+    const juroPct = juroPorTipo(tipo)
+    const juroVal = (valor * juroPct) / 100
+    const total = valor + juroVal
+    const sol = new Date(ANO, mes - 1, 8)
+    const venc = new Date(ANO, mes, 8)
+    const status = mes % 2 === 0 ? 'quitado' : 'aprovado'
+
+    const { error } = await supabase.from('loans').insert({
+      user_id: userId,
+      valor_solicitado: valor,
+      valor_total_devolver: total,
+      data_solicitacao: sol.toISOString().split('T')[0],
+      data_vencimento: venc.toISOString().split('T')[0],
+      juro_aplicado: juroPct,
+      status,
+      tipo,
+    })
+    if (error) console.error('Erro loan mensal', mes, error.message)
+  }
+
   console.log('Empréstimos inseridos.')
 
   const raffleIds = []
   for (let mes = 1; mes <= MESES; mes++) {
+    await supabase
+      .from('monthly_raffles')
+      .upsert(
+        {
+          mes,
+          ano: ANO,
+          premio_valor: CONFIG.valor_premio_sorteio,
+          status: 'fechado',
+        },
+        { onConflict: 'mes,ano', ignoreDuplicates: true }
+      )
+
     const { data: r, error } = await supabase
       .from('monthly_raffles')
-      .insert({
-        mes,
-        ano: ANO,
-        premio_valor: CONFIG.valor_premio_sorteio,
-        status: 'fechado',
-      })
-      .select('id')
+      .select('id, mes, ano, status')
+      .eq('mes', mes)
+      .eq('ano', ANO)
       .single()
+
     if (error) {
       console.error('Erro monthly_raffle', mes, error.message)
       continue
@@ -224,8 +288,17 @@ async function main() {
     raffleIds.push({ id: r.id, mes })
   }
 
+  if (raffleIds.length > 0) {
+    await supabase
+      .from('raffle_tickets')
+      .delete()
+      .in('raffle_id', raffleIds.map((r) => r.id))
+  }
+
   const usedByRaffle = {}
-  raffleIds.forEach((r) => { usedByRaffle[r.id] = new Set() })
+  for (const r of raffleIds) {
+    usedByRaffle[r.id] = new Set()
+  }
 
   for (const r of raffleIds) {
     const ticketsPerUser = [1, 3, 2, 4, 1, 2, 3, 2, 1, 4, 2, 3]
@@ -258,12 +331,19 @@ async function main() {
   console.log('Sorteios e bilhetes inseridos.')
 
   for (const r of raffleIds) {
-    const numeroSorteado = 1 + Math.floor(Math.random() * 100)
+    const numerosDisponiveis = Array.from(usedByRaffle[r.id] || [])
+    const numeroSorteado =
+      numerosDisponiveis.length > 0
+        ? numerosDisponiveis[Math.floor(Math.random() * numerosDisponiveis.length)]
+        : 1
+    const prefixo = String(1000 + Math.floor(Math.random() * 9000))
+    const resultadoLoteria = `${prefixo}${String(numeroSorteado).padStart(2, '0')}`
     const dataSorteio = new Date(ANO, r.mes - 1, 6)
     await supabase
       .from('monthly_raffles')
       .update({
         status: 'sorteado',
+        resultado_loteria: resultadoLoteria,
         numero_sorteado: numeroSorteado,
         data_sorteio: dataSorteio.toISOString().split('T')[0],
       })
@@ -271,8 +351,6 @@ async function main() {
   }
   console.log('Sorteios realizados.\n')
 
-  const quotaIds = quotas.map((q) => q.id)
-  const userIdsSim = participants.map((p) => p.id)
   const raffleIdsSim = raffleIds.map((r) => r.id)
 
   const { data: payments } = await supabase

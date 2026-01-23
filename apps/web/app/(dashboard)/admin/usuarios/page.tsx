@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/shared/Card'
 import { UsersManagement } from '@/components/admin/UsersManagement'
+import { UserRevenueHistory } from '@/components/admin/UserRevenueHistory'
 
 export default async function AdminUsuariosPage() {
   const supabase = await createClient()
@@ -41,6 +42,18 @@ export default async function AdminUsuariosPage() {
         </CardHeader>
         <CardContent>
           <UsersManagement />
+        </CardContent>
+      </Card>
+
+      <Card variant="elevated">
+        <CardHeader>
+          <CardTitle>Histórico de Arrecadação por Usuário</CardTitle>
+          <CardDescription>
+            Mês a mês por usuário com cotas, sorteios e juros de empréstimos quitados
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <UserRevenueHistory />
         </CardContent>
       </Card>
     </div>

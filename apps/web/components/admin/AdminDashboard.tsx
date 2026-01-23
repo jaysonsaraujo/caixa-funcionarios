@@ -19,6 +19,8 @@ interface Stats {
   pagamentosPendentes: number
   emprestimosPendentes: number
   sorteioMes: any
+  referenciaMes: number
+  referenciaAno: number
 }
 
 export function AdminDashboard() {
@@ -33,6 +35,8 @@ export function AdminDashboard() {
     pagamentosPendentes: 0,
     emprestimosPendentes: 0,
     sorteioMes: null,
+    referenciaMes: new Date().getMonth() + 1,
+    referenciaAno: new Date().getFullYear(),
   })
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
@@ -64,19 +68,7 @@ export function AdminDashboard() {
       const totalArrecadado =
         paymentsAll?.reduce((sum, p) => sum + Number(p.valor_pago), 0) || 0
 
-      // Arrecadação do mês atual
-      const totalArrecadadoMes =
-        paymentsAll
-          ?.filter(
-            (p) => p.mes_referencia === mesAtual && p.ano_referencia === anoAtual
-          )
-          .reduce((sum, p) => sum + Number(p.valor_pago), 0) || 0
-
-      // Arrecadação do ano atual
-      const totalArrecadadoAno =
-        paymentsAll
-          ?.filter((p) => p.ano_referencia === anoAtual)
-          .reduce((sum, p) => sum + Number(p.valor_pago), 0) || 0
+      // Arrecadação do mês/ano são calculados após definir referência
 
       // Pagamentos pendentes
       const { count: pagamentosPendentes } = await supabase
@@ -84,23 +76,67 @@ export function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .eq('status', 'aguardando_confirmacao')
 
-      // Total de empréstimos aprovados (todos os tempos)
+      // Total de empréstimos aprovados/quitados (todos os tempos)
       const { data: loansAll } = await supabase
         .from('loans')
         .select('valor_solicitado, data_solicitacao, status')
-        .eq('status', 'aprovado')
+        .in('status', ['aprovado', 'quitado'])
 
       const totalEmprestimos =
         loansAll?.reduce((sum, l) => sum + Number(l.valor_solicitado), 0) || 0
 
-      // Empréstimos aprovados no mês atual
+      // Sorteio mais recente (para referência)
+      const { data: rafflesLatest } = await supabase
+        .from('monthly_raffles')
+        .select('*')
+        .order('ano', { ascending: false })
+        .order('mes', { ascending: false })
+        .limit(1)
+
+      const latestRaffle = rafflesLatest?.[0] ?? null
+
+      const referenciaPeriodos: Array<{ ano: number; mes: number }> = []
+      paymentsAll?.forEach((p) => {
+        referenciaPeriodos.push({ ano: p.ano_referencia, mes: p.mes_referencia })
+      })
+      loansAll?.forEach((l) => {
+        if (!l.data_solicitacao) return
+        const d = new Date(l.data_solicitacao)
+        referenciaPeriodos.push({ ano: d.getFullYear(), mes: d.getMonth() + 1 })
+      })
+      if (latestRaffle) {
+        referenciaPeriodos.push({ ano: latestRaffle.ano, mes: latestRaffle.mes })
+      }
+
+      const referenciaOrdenada = referenciaPeriodos.sort((a, b) => {
+        if (a.ano !== b.ano) return b.ano - a.ano
+        return b.mes - a.mes
+      })
+      const referencia = referenciaOrdenada[0] || { ano: anoAtual, mes: mesAtual }
+
+      // Arrecadação do mês de referência
+      const totalArrecadadoMes =
+        paymentsAll
+          ?.filter(
+            (p) => p.mes_referencia === referencia.mes && p.ano_referencia === referencia.ano
+          )
+          .reduce((sum, p) => sum + Number(p.valor_pago), 0) || 0
+
+      // Arrecadação do ano de referência
+      const totalArrecadadoAno =
+        paymentsAll
+          ?.filter((p) => p.ano_referencia === referencia.ano)
+          .reduce((sum, p) => sum + Number(p.valor_pago), 0) || 0
+
+      // Empréstimos aprovados/quitados no mês de referência
       const totalEmprestimosMes =
         loansAll
           ?.filter((l) => {
+            if (!l.data_solicitacao) return false
             const dataSolicitacao = new Date(l.data_solicitacao)
             return (
-              dataSolicitacao.getMonth() + 1 === mesAtual &&
-              dataSolicitacao.getFullYear() === anoAtual
+              dataSolicitacao.getMonth() + 1 === referencia.mes &&
+              dataSolicitacao.getFullYear() === referencia.ano
             )
           })
           .reduce((sum, l) => sum + Number(l.valor_solicitado), 0) || 0
@@ -110,14 +146,6 @@ export function AdminDashboard() {
         .from('loans')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'pendente')
-
-      // Sorteio do mês
-      const { data: raffle } = await supabase
-        .from('monthly_raffles')
-        .select('*')
-        .eq('mes', mesAtual)
-        .eq('ano', anoAtual)
-        .single()
 
       setStats({
         totalUsers: totalUsers || 0,
@@ -129,7 +157,9 @@ export function AdminDashboard() {
         totalEmprestimosMes,
         pagamentosPendentes: pagamentosPendentes || 0,
         emprestimosPendentes: emprestimosPendentes || 0,
-        sorteioMes: raffle,
+        sorteioMes: latestRaffle,
+        referenciaMes: referencia.mes,
+        referenciaAno: referencia.ano,
       })
       setLoading(false)
     }
@@ -141,7 +171,10 @@ export function AdminDashboard() {
     return <div className="text-center py-8 text-gray-600 dark:text-gray-400">Carregando estatísticas...</div>
   }
 
-  const mesAtual = new Date().toLocaleString('pt-BR', { month: 'long', year: 'numeric' })
+  const mesReferencia = new Date(stats.referenciaAno, stats.referenciaMes - 1).toLocaleString(
+    'pt-BR',
+    { month: 'long', year: 'numeric' }
+  )
 
   return (
     <div className="space-y-6">
@@ -198,14 +231,19 @@ export function AdminDashboard() {
 
       {/* Estatísticas Mensais */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-          Estatísticas de {mesAtual}
-        </h2>
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Estatísticas de {mesReferencia}
+          </h2>
+          <p className="text-xs text-gray-600 dark:text-gray-400">
+            Referência: {mesReferencia}
+          </p>
+        </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Arrecadação do Mês"
             value={formatCurrency(stats.totalArrecadadoMes)}
-            description={`Pagamentos confirmados em ${mesAtual}`}
+            description={`Pagamentos confirmados em ${mesReferencia}`}
             variant="success"
             icon={
               <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -216,7 +254,7 @@ export function AdminDashboard() {
           <StatCard
             title="Empréstimos do Mês"
             value={formatCurrency(stats.totalEmprestimosMes)}
-            description={`Aprovados em ${mesAtual}`}
+            description={`Aprovados/quitados em ${mesReferencia}`}
             variant="info"
             icon={
               <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -266,13 +304,13 @@ export function AdminDashboard() {
       {/* Estatísticas Anuais */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-          Estatísticas do Ano {new Date().getFullYear()}
+          Estatísticas do Ano {stats.referenciaAno}
         </h2>
         <div className="grid gap-6 md:grid-cols-2">
           <StatCard
             title="Arrecadação Anual"
             value={formatCurrency(stats.totalArrecadadoAno)}
-            description="Total arrecadado no ano atual"
+            description="Total arrecadado no ano de referência"
             variant="success"
             icon={
               <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
